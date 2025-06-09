@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Earned - {{companyName}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f59e0b;
+            margin-bottom: 10px;
+        }
+        .achievement-badge {
+            background: linear-gradient(45deg, #f59e0b, #eab308);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .certificate-preview {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 3px solid #f59e0b;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .certificate-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+        .course-name {
+            font-size: 18px;
+            color: #b45309;
+            font-weight: bold;
+        }
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #f59e0b, #eab308);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">{{companyName}}</div>
+            <span class="achievement-badge">🏆 Achievement Unlocked!</span>
+            <h1>Congratulations {{firstName}}!</h1>
+        </div>
+        
+        <p>We're thrilled to inform you that you have successfully completed <strong>{{courseName}}</strong> and earned your certificate!</p>
+        
+        <div class="certificate-preview">
+            <div class="certificate-title">Certificate of Completion</div>
+            <div class="course-name">{{courseName}}</div>
+            <p style="margin-top: 15px; color: #92400e;">Awarded to <strong>{{firstName}}</strong></p>
+        </div>
+        
+        <p>Your dedication and hard work have paid off. This certificate represents your commitment to learning and professional growth.</p>
+        
+        <p>Click the button below to download your official certificate:</p>
+        
+        <a href="{{certificateUrl}}" class="button">Download Certificate</a>
+        
+        <p>Share your achievement with your network and continue your learning journey with us!</p>
+        
+        <div class="footer">
+            <p>Best regards,<br>The {{companyName}} Team</p>
+            <p>Keep up the excellent work and explore more courses to advance your skills!</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,270 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  trainer
+  learner
+}
+
+enum AuthProvider {
+  email
+  google
+  facebook
+}
+
+enum CourseLevel {
+  beginner
+  intermediate
+  advanced
+}
+
+enum SessionStatus {
+  planned
+  ongoing
+  completed
+  canceled
+}
+
+enum ContentType {
+  pdf
+  video
+  quiz
+  url
+  text
+}
+
+enum EnrollmentStatus {
+  pending
+  confirmed
+  canceled
+}
+
+enum PaymentMethod {
+  stripe
+  paypal
+  bank_transfer
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  firstName       String   @map("first_name") @db.VarChar(100)
+  lastName        String   @map("last_name") @db.VarChar(100)
+  email           String   @unique @db.VarChar(255)
+  password        String   @db.VarChar(255)
+  avatarUrl       String?  @map("avatar_url") @db.Text
+  role            UserRole @default(learner)
+  bio             String?  @db.Text
+  certifications  String?  @db.Text
+  otp             Int?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  authProviders      AuthProviderModel[] @relation("UserAuthProviders")
+  trainingSessions   CourseSession[]     @relation("TrainerSessions")
+  enrollments        Enrollment[]        @relation("UserEnrollments")
+  learnerProgress    LearnerProgress[]   @relation("UserProgress")
+  evaluations        Evaluation[]        @relation("UserEvaluations")
+  sentMessages       Message[]           @relation("MessageSender")
+  receivedMessages   Message[]           @relation("MessageReceiver")
+  notifications      Notification[]      @relation("UserNotifications")
+  refreshTokens      RefreshToken[]      @relation("UserRefreshTokens")
+
+  @@map("users")
+}
+
+model AuthProviderModel {
+  id         Int          @id @default(autoincrement())
+  userId     Int          @map("user_id")
+  provider   AuthProvider
+  providerId String       @map("provider_id") @db.VarChar(255)
+
+  // Relations
+  user User @relation("UserAuthProviders", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_providers")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique @db.VarChar(500)
+  userId    Int      @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation("UserRefreshTokens", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Course {
+  id           Int         @id @default(autoincrement())
+  title        String      @db.VarChar(255)
+  slug         String      @unique @db.VarChar(255)
+  description  String?     @db.Text
+  level        CourseLevel @default(beginner)
+  price        Decimal     @db.Decimal(10, 2)
+  duration     String?     @db.VarChar(50)
+  thumbnailUrl String?     @map("thumbnail_url") @db.Text
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  sessions CourseSession[] @relation("CourseSessions")
+  contents CourseContent[] @relation("CourseContents")
+
+  @@map("courses")
+}
+
+model CourseSession {
+  id        Int           @id @default(autoincrement())
+  courseId  Int           @map("course_id")
+  trainerId Int           @map("trainer_id")
+  startDate DateTime      @map("start_date") @db.Date
+  endDate   DateTime      @map("end_date") @db.Date
+  location  String?       @db.VarChar(255)
+  status    SessionStatus @default(planned)
+
+  // Relations
+  course      Course       @relation("CourseSessions", fields: [courseId], references: [id], onDelete: Cascade)
+  trainer     User         @relation("TrainerSessions", fields: [trainerId], references: [id])
+  enrollments Enrollment[] @relation("SessionEnrollments")
+  evaluations Evaluation[] @relation("SessionEvaluations")
+
+  @@map("course_sessions")
+}
+
+model CourseContent {
+  id         Int         @id @default(autoincrement())
+  courseId   Int         @map("course_id")
+  type       ContentType
+  title      String      @db.VarChar(255)
+  contentUrl String?     @map("content_url") @db.Text
+  orderIndex Int         @map("order_index")
+
+  // Relations
+  course          Course            @relation("CourseContents", fields: [courseId], references: [id], onDelete: Cascade)
+  learnerProgress LearnerProgress[] @relation("ContentProgress")
+
+  @@map("course_contents")
+}
+
+model Enrollment {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  sessionId Int              @map("session_id")
+  status    EnrollmentStatus @default(pending)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  user        User          @relation("UserEnrollments", fields: [userId], references: [id], onDelete: Cascade)
+  session     CourseSession @relation("SessionEnrollments", fields: [sessionId], references: [id], onDelete: Cascade)
+  payments    Payment[]     @relation("EnrollmentPayments")
+  certificate Certificate?  @relation("EnrollmentCertificate")
+
+  @@map("enrollments")
+}
+
+model LearnerProgress {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  contentId   Int       @map("content_id")
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+
+  // Relations
+  user    User          @relation("UserProgress", fields: [userId], references: [id], onDelete: Cascade)
+  content CourseContent @relation("ContentProgress", fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@map("learner_progress")
+}
+
+model Evaluation {
+  id        Int      @id @default(autoincrement())
+  sessionId Int      @map("session_id")
+  userId    Int      @map("user_id")
+  score     Float
+  comment   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  session CourseSession @relation("SessionEvaluations", fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User          @relation("UserEvaluations", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("evaluations")
+}
+
+model Question {
+  id            Int     @id @default(autoincrement())
+  quizId        Int     @map("quiz_id")
+  questionText  String  @map("question_text") @db.Text
+  correctAnswer String  @map("correct_answer") @db.Text
+
+  @@map("questions")
+}
+
+model Certificate {
+  id            Int      @id @default(autoincrement())
+  enrollmentId  Int      @unique @map("enrollment_id")
+  certificateUrl String  @map("certificate_url") @db.Text
+  issuedAt      DateTime @map("issued_at")
+
+  // Relations
+  enrollment Enrollment @relation("EnrollmentCertificate", fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@map("certificates")
+}
+
+model Payment {
+  id            Int           @id @default(autoincrement())
+  enrollmentId  Int           @map("enrollment_id")
+  paymentMethod PaymentMethod @map("payment_method")
+  paymentDate   DateTime      @map("payment_date")
+  reference     String        @db.VarChar(255)
+  amount        Decimal       @db.Decimal(10, 2)
+
+  // Relations
+  enrollment Enrollment @relation("EnrollmentPayments", fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  senderId   Int      @map("sender_id")
+  receiverId Int      @map("receiver_id")
+  content    String   @db.Text
+  read       Boolean  @default(false)
+  sentAt     DateTime @default(now()) @map("sent_at")
+
+  // Relations
+  sender   User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model Notification {
+  id      Int     @id @default(autoincrement())
+  userId  Int     @map("user_id")
+  title   String  @db.VarChar(255)
+  message String  @db.Text
+  isRead  Boolean @default(false) @map("is_read")
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  // Relations
+  user User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}

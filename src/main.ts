@@ -54,8 +54,8 @@ async function bootstrap() {
   // Swagger documentation
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('SaaS Backend API')
-      .setDescription('Comprehensive SaaS Backend with NestJS, Prisma, and JWT')
+      .setTitle('Fireshield E-learning Platform API')
+      .setDescription('Comprehensive E-learning Platform Backend with NestJS, Prisma, and JWT')
       .setVersion('1.0')
       .addBearerAuth(
         {
@@ -69,9 +69,13 @@ async function bootstrap() {
         'JWT-auth',
       )
       .addTag('Authentication', 'User authentication and authorization')
+      .addTag('Auth Providers', 'External authentication providers management')
       .addTag('Users', 'User management operations')
       .addTag('Courses', 'Course management operations')
+      .addTag('Course Sessions', 'Course session management')
+      .addTag('Course Contents', 'Course content management')
       .addTag('Enrollments', 'Enrollment management operations')
+      .addTag('Learner Progress', 'Learning progress tracking')
       .addTag('Messages', 'Internal messaging system')
       .addTag('Notifications', 'Notification system')
       .build();
@@ -87,7 +91,7 @@ async function bootstrap() {
   const port = configService.get('PORT', 3000);
   await app.listen(port);
 
-  console.log(`🚀 Application is running on: http://localhost:${port}/${apiPrefix}`);
+  console.log(`🚀 Fireshield E-learning Platform API is running on: http://localhost:${port}/${apiPrefix}`);
   if (process.env.NODE_ENV !== 'production') {
     console.log(`📚 Swagger documentation: http://localhost:${port}/${apiPrefix}/docs`);
   }

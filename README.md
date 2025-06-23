@@ -1,12 +1,13 @@
-# NestJS SaaS Backend
+# Fireshield E-learning Platform Backend
 
-A comprehensive, production-ready SaaS backend built with NestJS, Prisma ORM, MySQL, and JWT authentication. This system provides a complete learning management platform with user management, course enrollment, messaging, and notification features.
+A comprehensive, production-ready E-learning platform backend built with NestJS, Prisma ORM, MySQL, and JWT authentication. This system provides a complete learning management platform with user management, course enrollment, progress tracking, messaging, and notification features specifically designed for Fireshield's training requirements.
 
 ## 🚀 Features
 
 ### Authentication & Authorization
 - JWT-based authentication with access and refresh tokens
 - Role-based access control (Admin, Trainer, Learner)
+- External authentication providers (Google, Facebook, Email)
 - Password reset via email with OTP verification
 - Secure password hashing with bcrypt
 - Rate limiting for authentication endpoints
@@ -14,28 +15,43 @@ A comprehensive, production-ready SaaS backend built with NestJS, Prisma ORM, My
 ### User Management
 - Complete user CRUD operations
 - Profile management with avatar support
-- Role-based permissions
+- Role-based permissions (Admin, Trainer, Learner)
 - User statistics and analytics
+- Multi-language support
 
 ### Course Management
-- Course creation and management
-- Course sessions with trainer assignment
-- Course content management (videos, PDFs, quizzes, etc.)
-- Course enrollment system
-- Progress tracking for learners
+- Course creation and management with rich metadata
+- Course sessions with trainer assignment and scheduling
+- Course content management (videos, PDFs, quizzes, URLs, text)
+- Content ordering and reordering capabilities
+- Course enrollment system with status tracking
+- Progress tracking for learners with completion certificates
 
-### Communication
+### Learning Progress Tracking
+- Individual learner progress per content item
+- Course completion percentage calculation
+- Progress notifications and achievements
+- Detailed progress analytics for trainers and admins
+
+### Communication System
 - Internal messaging system between users
-- Real-time notifications
+- Real-time notifications with read/unread status
 - Email notifications with HTML templates
-- Conversation management
+- Conversation management and history
 
 ### Email System
 - Welcome emails for new users
 - Password reset emails with OTP
 - Enrollment confirmation emails
 - Certificate delivery emails
+- Progress milestone notifications
 - Customizable HTML email templates
+
+### Financial Management
+- Payment tracking and management
+- Multiple payment methods (Stripe, PayPal, Bank Transfer)
+- Automatic invoice generation
+- Payment status monitoring and alerts
 
 ### API Documentation
 - Complete Swagger/OpenAPI documentation
@@ -50,7 +66,7 @@ A comprehensive, production-ready SaaS backend built with NestJS, Prisma ORM, My
 - CORS configuration
 - Helmet security middleware
 - Compression middleware
-- Rate limiting
+- Rate limiting and throttling
 
 ## 🛠️ Tech Stack
 
@@ -101,7 +117,7 @@ SMTP_HOST="smtp.gmail.com"
 SMTP_PORT=587
 SMTP_USER="your-email@gmail.com"
 SMTP_PASS="your-app-password"
-FROM_EMAIL="noreply@yourapp.com"
+FROM_EMAIL="noreply@fireshield.com"
 
 # Application
 PORT=3000
@@ -165,6 +181,11 @@ Visit `http://localhost:3000/api/v1/docs` to explore the interactive Swagger doc
 - `POST /auth/reset-password` - Reset password with OTP
 - `POST /auth/logout` - User logout
 
+### Auth Providers
+- `POST /auth-providers` - Create auth provider (Admin)
+- `GET /auth-providers/my-providers` - Get user auth providers
+- `DELETE /auth-providers/:id` - Remove auth provider
+
 ### Users
 - `GET /users` - Get all users (Admin/Trainer)
 - `GET /users/me` - Get current user profile
@@ -183,6 +204,26 @@ Visit `http://localhost:3000/api/v1/docs` to explore the interactive Swagger doc
 - `PATCH /courses/:id` - Update course (Admin/Trainer)
 - `DELETE /courses/:id` - Delete course (Admin)
 
+### Course Sessions
+- `POST /course-sessions` - Create session (Admin/Trainer)
+- `GET /course-sessions` - Get all sessions
+- `GET /course-sessions/my-sessions` - Get trainer sessions
+- `GET /course-sessions/stats` - Get session statistics (Admin)
+- `GET /course-sessions/:id` - Get session by ID
+- `PATCH /course-sessions/:id` - Update session (Admin/Trainer)
+- `PATCH /course-sessions/:id/status` - Update session status
+- `DELETE /course-sessions/:id` - Delete session (Admin)
+
+### Course Contents
+- `POST /course-contents` - Create content (Admin/Trainer)
+- `GET /course-contents` - Get all contents
+- `GET /course-contents/course/:courseId` - Get contents by course
+- `GET /course-contents/stats` - Get content statistics (Admin)
+- `GET /course-contents/:id` - Get content by ID
+- `PATCH /course-contents/reorder/:courseId` - Reorder contents
+- `PATCH /course-contents/:id` - Update content (Admin/Trainer)
+- `DELETE /course-contents/:id` - Delete content (Admin/Trainer)
+
 ### Enrollments
 - `POST /enrollments` - Enroll in a course
 - `GET /enrollments` - Get all enrollments (Admin/Trainer)
@@ -190,6 +231,16 @@ Visit `http://localhost:3000/api/v1/docs` to explore the interactive Swagger doc
 - `GET /enrollments/stats` - Get enrollment statistics (Admin)
 - `PATCH /enrollments/:id/confirm` - Confirm enrollment (Admin/Trainer)
 - `PATCH /enrollments/:id/cancel` - Cancel enrollment
+
+### Learner Progress
+- `POST /learner-progress` - Create progress
+- `GET /learner-progress` - Get all progress (Admin/Trainer)
+- `GET /learner-progress/my-progress` - Get user progress
+- `GET /learner-progress/course/:courseId/progress` - Get course progress
+- `GET /learner-progress/stats` - Get progress statistics (Admin)
+- `POST /learner-progress/complete/:contentId` - Mark content completed
+- `PATCH /learner-progress/:id` - Update progress
+- `DELETE /learner-progress/:id` - Delete progress (Admin)
 
 ### Messages
 - `POST /messages` - Send a message
@@ -210,10 +261,12 @@ Visit `http://localhost:3000/api/v1/docs` to explore the interactive Swagger doc
 The database follows the provided data dictionary with the following main entities:
 
 - **Users**: User accounts with roles (admin, trainer, learner)
+- **Auth Providers**: External authentication provider links
 - **Courses**: Course information and metadata
 - **Course Sessions**: Scheduled course sessions with trainers
-- **Course Contents**: Course materials (videos, PDFs, quizzes)
+- **Course Contents**: Course materials (videos, PDFs, quizzes, URLs, text)
 - **Enrollments**: User enrollments in course sessions
+- **Learner Progress**: Individual progress tracking per content
 - **Messages**: Internal messaging system
 - **Notifications**: User notifications
 - **Payments**: Payment tracking
@@ -256,23 +309,27 @@ npm run format             # Format code with Prettier
 
 ```
 src/
-├── common/                 # Shared utilities and decorators
-│   ├── decorators/        # Custom decorators
-│   ├── filters/           # Exception filters
-│   ├── guards/            # Authorization guards
-│   └── interceptors/      # Request/response interceptors
-├── config/                # Configuration schemas
-├── modules/               # Feature modules
-│   ├── auth/             # Authentication module
-│   ├── users/            # User management module
-│   ├── courses/          # Course management module
-│   ├── enrollments/      # Enrollment module
-│   ├── messages/         # Messaging module
-│   ├── notifications/    # Notification module
-│   └── email/            # Email service module
-├── prisma/               # Database service
-├── app.module.ts         # Root application module
-└── main.ts              # Application entry point
+├── common/                    # Shared utilities and decorators
+│   ├── decorators/           # Custom decorators
+│   ├── filters/              # Exception filters
+│   ├── guards/               # Authorization guards
+│   └── interceptors/         # Request/response interceptors
+├── config/                   # Configuration schemas
+├── modules/                  # Feature modules
+│   ├── auth/                # Authentication module
+│   ├── auth-providers/      # External auth providers
+│   ├── users/               # User management module
+│   ├── courses/             # Course management module
+│   ├── course-sessions/     # Course session management
+│   ├── course-contents/     # Course content management
+│   ├── enrollments/         # Enrollment module
+│   ├── learner-progress/    # Progress tracking module
+│   ├── messages/            # Messaging module
+│   ├── notifications/       # Notification module
+│   └── email/               # Email service module
+├── prisma/                  # Database service
+├── app.module.ts            # Root application module
+└── main.ts                  # Application entry point
 ```
 
 ## 🔒 Security Features
@@ -293,13 +350,8 @@ The system includes beautiful, responsive HTML email templates for:
 - **Welcome Email**: Sent to new users upon registration
 - **Password Reset**: OTP-based password reset emails
 - **Enrollment Confirmation**: Course enrollment confirmations
+- **Progress Notifications**: Learning milestone achievements
 - **Certificate Delivery**: Course completion certificates
-
-Templates are built with Handlebars and include:
-- Responsive design for all devices
-- Professional styling with gradients and colors
-- Dynamic content injection
-- Company branding support
 
 ## 🚀 Deployment
 
@@ -355,6 +407,18 @@ After running the seed command, you'll have these default users:
 - **Trainer**: trainer@example.com / Trainer123!
 - **Learner**: learner@example.com / Learner123!
 
+## 🎯 Fireshield-Specific Features
+
+This platform is specifically designed for Fireshield's training requirements:
+
+- **Multi-role Support**: Administrators, Trainers, and Learners with specific permissions
+- **Comprehensive Progress Tracking**: Detailed learning analytics and completion tracking
+- **Flexible Content Management**: Support for various content types (videos, PDFs, quizzes, etc.)
+- **Session Management**: Live and recorded training sessions with trainer assignment
+- **Certificate Generation**: Automatic certificate generation upon course completion
+- **Communication Tools**: Internal messaging and notification system
+- **Financial Tracking**: Payment management and invoice generation
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -379,13 +443,14 @@ For support and questions:
 ## 🔄 Changelog
 
 ### v1.0.0
-- Initial release with complete SaaS backend functionality
-- JWT authentication with refresh tokens
-- Role-based access control
-- Course management system
-- Enrollment and progress tracking
-- Internal messaging system
+- Initial release with complete E-learning platform functionality
+- JWT authentication with refresh tokens and external providers
+- Role-based access control for Admin, Trainer, and Learner roles
+- Comprehensive course management system with sessions and contents
+- Enrollment and progress tracking with notifications
+- Internal messaging system with conversation management
 - Email notifications with HTML templates
-- Comprehensive API documentation
-- Docker support
-- Production-ready security features
+- Financial management with payment tracking
+- Complete API documentation with Swagger
+- Docker support and production-ready security features
+- Fireshield-specific customizations and workflows
